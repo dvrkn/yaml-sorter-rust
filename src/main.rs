@@ -83,6 +83,8 @@ fn main() {
       - sources
     "#;
 
+    println!("Pre-order:\n---{}\n\n", pre_order);
+
     let s = r#"
         test: yaml
         namespace: argocd
