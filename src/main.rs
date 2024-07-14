@@ -9,6 +9,11 @@ fn walk(doc: &mut Yaml, key: &str) {
                 walk(x, key);
             }
         }
+        Yaml::Hash(ref mut h) => {
+            for (_, v) in h {
+                walk(v, key);
+            }
+        }
         _ => {}
     }
 }
@@ -19,20 +24,30 @@ fn replacer(array: &mut Array, key: &str) {
 
 fn main() {
     let s = r#"
+      arr:
       - name: c
         value: 3
       - name: b
         value: 2
       - name: a
         value: 1
+        arr:
+        - name: z
+          value: 99
+        - name: y
+          value: 88
+        - name: x
+          value: 77
     "#;
 
     let mut docs = YamlLoader::load_from_str(s).unwrap();
     let doc = &mut docs[0];
 
-    println!("Before sorting: {}", doc[0]["name"].as_str().unwrap());
+    // pretty print all the documents in the YAML file
+    println!("Before: {:?}", doc);
 
     walk(doc, "name");
 
-    println!("After sorting: {}", doc[0]["name"].as_str().unwrap());
+    println!("After: {:?}", doc);
+
 }
