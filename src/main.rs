@@ -19,7 +19,16 @@ fn walk(doc: &mut Yaml, key: &str) {
 }
 
 fn replacer(array: &mut Array, key: &str) {
-    array.sort_by_key(|x| x[key].as_str().unwrap().to_string());
+    array.sort_by(|a, b| {
+        let a_str = a[key].as_str();
+        let b_str = b[key].as_str();
+        if a_str.is_some() && b_str.is_some() {
+            let a =a_str.unwrap();
+            let b = b_str.unwrap();
+            return a.cmp(b);
+        }
+        std::cmp::Ordering::Equal
+    });
 }
 
 fn main() {
@@ -38,12 +47,13 @@ fn main() {
           value: 88
         - name: x
           value: 77
+      arr2:
+        - zaza
     "#;
 
     let mut docs = YamlLoader::load_from_str(s).unwrap();
     let doc = &mut docs[0];
 
-    // pretty print all the documents in the YAML file
     println!("Before: {:?}", doc);
 
     walk(doc, "name");
