@@ -1,8 +1,15 @@
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::sync::OnceLock;
+use clap::Parser;
 use yaml_rust2::{YamlEmitter, YamlLoader};
 use yaml_rust2::yaml::{Array, Yaml};
+
+#[derive(Parser)]
+struct Cli {
+    action: String,
+    path: std::path::PathBuf,
+}
 
 static CONFIG: OnceLock<Yaml> = OnceLock::new();
 
@@ -13,7 +20,6 @@ fn load_config() -> Yaml {
     let docs = YamlLoader::load_from_str(&contents).expect("Unable to parse config file");
     docs[0].clone()
 }
-
 
 fn walk(doc: &mut Yaml) {
     match doc {
@@ -54,7 +60,6 @@ fn hash_sorter(hash: &mut yaml_rust2::yaml::Hash) {
     }
 
     *hash = result;
-
 }
 
 fn array_sorter(array: &mut Array) {
@@ -73,65 +78,33 @@ fn array_sorter(array: &mut Array) {
 fn main() {
     CONFIG.set(load_config()).expect("Unable to set config");
 
-    let s = r#"
-        test: yaml
-        namespace: argocd
-        name: test
-        apiVersion: argoproj.io/v1alpha1
-        arr:
-          - test: without sort key
-          - test: yaml
-            namespace: argocd
-            name: test
-            apiVersion: argoproj.io/v1alpha1
-            arr2:
-              - namespace: argocd
-                name: test
-                apiVersion: argoproj.io/v1alpha1
-                test: yaml
-                enabled: false
-          - enabled: false
-            name: arr
-        enabled: false
-        spec:
-          generators:
-            - list:
-                elements:
-                  - name: c
-                  - name: b
-                  - name: a
-                    ord:
-                      - name: c
-                      - name: b
-                      - name: a
+    let args = Cli::parse();
+    let mut file = File::open(&args.path).expect("Unable to open file");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Unable to read file");
+    let mut docs = YamlLoader::load_from_str(&contents).expect("Unable to parse file");
+    // let doc = &mut docs[0];
 
-          name: cluster-resources
-
-        # Comment
-        anchor: &test
-          - anchor
-        anchor-test: *test
-    "#;
-
-    let mut docs = YamlLoader::load_from_str(s).unwrap();
-    let doc = &mut docs[0];
+    for doc in &mut docs {
+        walk(doc);
+    }
 
     // Dump the YAML object
     let mut out_str = String::new();
     {
         let mut emitter = YamlEmitter::new(&mut out_str);
-        emitter.dump(doc).unwrap();
+        for doc in &docs {
+            emitter.dump(doc).unwrap();
+        }
     }
-    println!("Before:\n{}\n\n", out_str);
 
-    walk(doc);
-
-    // Dump the YAML object
-    let mut out_str = String::new();
-    {
-        let mut emitter = YamlEmitter::new(&mut out_str);
-        emitter.dump(doc).unwrap();
+    if args.action == "i" {
+        // write the output to the file
+        let mut file = File::create(&args.path).expect("Unable to create file");
+        file.write_all(out_str.as_bytes()).expect("Unable to write to file");
+        return;
+    } else {
+        println!("{}", out_str);
     }
-    println!("After:\n{}", out_str);
 
 }

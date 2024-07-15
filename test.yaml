@@ -1,0 +1,37 @@
+test: yaml
+namespace: argocd
+name: test
+apiVersion: argoproj.io/v1alpha1
+arr:
+  - test: without sort key
+  - test: yaml
+    namespace: argocd
+    name: test
+    apiVersion: argoproj.io/v1alpha1
+    arr2:
+      - namespace: argocd
+        name: test
+        apiVersion: argoproj.io/v1alpha1
+        test: yaml
+        enabled: false
+  - enabled: false
+    name: arr
+enabled: false
+spec:
+  generators:
+    - list:
+        elements:
+          - name: c
+          - name: b
+          - name: a
+            ord:
+              - name: c
+              - name: b
+              - name: a
+
+  name: cluster-resources
+
+# Comment
+anchor: &test
+  - anchor
+anchor-test: *test
