@@ -18,5 +18,7 @@ jobs:
         run: cargo build --release
       - name: Check artifact weight
         run: ls -lh target/release/
+      - name: Before
+        run: cat test.yaml
       - name: Run
-        run: cargo run --release
+        run: cargo run --release -- e test.yaml

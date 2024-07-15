@@ -1,11 +1,9 @@
 use std::fs::File;
 use std::io::{Read, Write};
 use std::sync::OnceLock;
-use clap::Parser;
 use yaml_rust2::{YamlEmitter, YamlLoader};
 use yaml_rust2::yaml::{Array, Yaml};
 
-#[derive(Parser)]
 struct Cli {
     action: String,
     path: std::path::PathBuf,
@@ -78,18 +76,23 @@ fn array_sorter(array: &mut Array) {
 fn main() {
     CONFIG.set(load_config()).expect("Unable to set config");
 
-    let args = Cli::parse();
+    let action = std::env::args().nth(1).expect("no action given");
+    let path = std::env::args().nth(2).expect("no path given");
+
+    let args = Cli {
+        action: action,
+        path: std::path::PathBuf::from(path),
+    };
+
     let mut file = File::open(&args.path).expect("Unable to open file");
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Unable to read file");
     let mut docs = YamlLoader::load_from_str(&contents).expect("Unable to parse file");
-    // let doc = &mut docs[0];
 
     for doc in &mut docs {
         walk(doc);
     }
 
-    // Dump the YAML object
     let mut out_str = String::new();
     {
         let mut emitter = YamlEmitter::new(&mut out_str);
@@ -99,7 +102,6 @@ fn main() {
     }
 
     if args.action == "i" {
-        // write the output to the file
         let mut file = File::create(&args.path).expect("Unable to create file");
         file.write_all(out_str.as_bytes()).expect("Unable to write to file");
         return;
