@@ -1,0 +1,25 @@
+sortKey: name
+preOrder:
+  - enabled
+  - apiVersion
+  - kind
+  - metadata
+  - name
+  - namespace
+  - labels
+  - annotations
+  - goTemplate
+  - generators
+  - spec
+  - containers
+  - image
+  - ports
+  - protocol
+  - resources
+  - limits
+  - requests
+  - cpu
+  - memory
+  - volumeMount
+  - destination
+  - sources

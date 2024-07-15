@@ -1,89 +1,77 @@
+use std::fs::File;
+use std::io::Read;
+use std::sync::OnceLock;
 use yaml_rust2::{YamlEmitter, YamlLoader};
 use yaml_rust2::yaml::{Array, Yaml};
 
-fn walk(doc: &mut Yaml, key: &str, pre_order_yaml: &str) {
+static CONFIG: OnceLock<Yaml> = OnceLock::new();
+
+fn load_config() -> Yaml {
+    let mut file = File::open("config.yaml").expect("Unable to open config file");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Unable to read config file");
+    let docs = YamlLoader::load_from_str(&contents).expect("Unable to parse config file");
+    docs[0].clone()
+}
+
+
+fn walk(doc: &mut Yaml) {
     match doc {
         Yaml::Array(ref mut v) => {
-            array_sorter(v, key);
+            array_sorter(v);
             for x in v {
-                walk(x, key, pre_order_yaml);
+                walk(x);
             }
         }
         Yaml::Hash(ref mut h) => {
-            hash_sorter(h, pre_order_yaml);
+            hash_sorter(h);
             for (_, v) in h {
-                walk(v, key, pre_order_yaml);
+                walk(v);
             }
         }
         _ => {}
     }
 }
 
-fn hash_sorter(hash: &mut yaml_rust2::yaml::Hash, pre_order_yaml: &str) {
-    let pre_order_docs = YamlLoader::load_from_str(pre_order_yaml).unwrap();
-    let pre_order_doc = &pre_order_docs[0];
-    let pre_order_array = pre_order_doc.as_vec().unwrap();
+fn hash_sorter(hash: &mut yaml_rust2::yaml::Hash) {
+    let pre_order_array = CONFIG.get().unwrap()["preOrder"].as_vec().unwrap();
     let mut result = yaml_rust2::yaml::Hash::new();
 
     // Sort the hash by the pre_order_array
     for key in pre_order_array {
-        if hash.contains_key(key) {
-            result.insert(key.clone(), hash.remove(key).unwrap());
+        if let Some((k, v)) = hash.remove_entry(key) {
+            result.insert(k, v);
         }
     }
 
-    // Sort the rest of the hash
-    let mut entries: Vec<_> = hash.into_iter().collect();
-    entries.sort_by_key(|entry| entry.0);
-    for (key, value) in entries {
-        result.insert(key.clone(), value.clone());
+    // Sort the remaining hash
+    let mut hash_keys: Vec<_> = hash.keys().cloned().collect();
+    hash_keys.sort_by(|a, b| a.cmp(b));
+    for key in hash_keys {
+        if let Some((k, v)) = hash.remove_entry(&key) {
+            result.insert(k, v);
+        }
     }
 
     *hash = result;
 
 }
 
-fn array_sorter(array: &mut Array, key: &str) {
+fn array_sorter(array: &mut Array) {
+    let key = CONFIG.get().unwrap()["sortKey"].as_str().unwrap();
+
     array.sort_by(|a, b| {
-        let a_str = a[key].as_str();
-        let b_str = b[key].as_str();
-        if a_str.is_some() && b_str.is_some() {
-            let a =a_str.unwrap();
-            let b = b_str.unwrap();
-            return a.cmp(b);
+        match (a[key].as_str(), b[key].as_str()) {
+            (Some(a_str), Some(b_str)) => a_str.cmp(b_str),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => std::cmp::Ordering::Equal,
         }
-        std::cmp::Ordering::Equal
     });
 }
 
 fn main() {
-    let pre_order = r#"
-      - enabled
-      - apiVersion
-      - kind
-      - metadata
-      - name
-      - namespace
-      - labels
-      - annotations
-      - goTemplate
-      - generators
-      - spec
-      - containers
-      - image
-      - ports
-      - protocol
-      - resources
-      - limits
-      - requests
-      - cpu
-      - memory
-      - volumeMount
-      - destination
-      - sources
-    "#;
-
-    println!("Pre-order:\n---{}\n\n", pre_order);
+    CONFIG.set(load_config()).expect("Unable to set config");
 
     let s = r#"
         test: yaml
@@ -136,7 +124,7 @@ fn main() {
     }
     println!("Before:\n{}\n\n", out_str);
 
-    walk(doc, "name", pre_order);
+    walk(doc);
 
     // Dump the YAML object
     let mut out_str = String::new();
