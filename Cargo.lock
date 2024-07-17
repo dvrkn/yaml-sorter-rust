@@ -119,7 +119,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "yaml-sorter-rust"
+name = "yaml_sorter_rust"
 version = "0.1.0"
 dependencies = [
  "yaml-rust2",

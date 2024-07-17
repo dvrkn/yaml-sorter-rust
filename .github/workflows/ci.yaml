@@ -14,6 +14,8 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - name: Cargo test
+        run: cargo test
       - name: Release Build
         run: cargo build --release
       - name: Check artifact weight
