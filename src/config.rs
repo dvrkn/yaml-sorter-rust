@@ -7,7 +7,7 @@ pub struct Config {
     pub pre_order: Vec<String>
 }
 
-fn set_config(sort_key: String, pre_order: Vec<String>) -> Config {
+pub fn set_config(sort_key: String, pre_order: Vec<String>) -> Config {
     Config {
         sort_key,
         pre_order
@@ -19,15 +19,6 @@ pub fn init_config() -> Config {
     set_config(
         config_yaml["sortKey"].as_str().unwrap().to_string(),
         config_yaml["preOrder"].as_vec().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect()
-    )
-}
-
-pub fn init_test_config(mock_config: &str) -> Config {
-    let config_yaml = YamlLoader::load_from_str(mock_config).unwrap();
-    let config_doc = &config_yaml[0];
-    set_config(
-        config_doc["sortKey"].as_str().unwrap().to_string(),
-        config_doc["preOrder"].as_vec().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect()
     )
 }
 

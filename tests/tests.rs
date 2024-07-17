@@ -1,6 +1,15 @@
-use yaml_sorter_rust::config::{init_test_config};
+use yaml_sorter_rust::config::{Config, set_config};
 use yaml_sorter_rust::processors::{process_yaml};
 use yaml_rust2::{YamlLoader, Yaml};
+
+pub fn init_test_config(mock_config: &str) -> Config {
+    let config_yaml = YamlLoader::load_from_str(mock_config).unwrap();
+    let config_doc = &config_yaml[0];
+    set_config(
+        config_doc["sortKey"].as_str().unwrap().to_string(),
+        config_doc["preOrder"].as_vec().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect()
+    )
+}
 
 #[test]
 fn test_load_config() {
@@ -11,7 +20,7 @@ fn test_load_config() {
             - a
         sortKey: test_key
         "
-    );();
+    );
 
     assert!(!config.pre_order.is_empty());
     assert_eq!(config.sort_key, "test_key")
@@ -36,7 +45,7 @@ fn test_hash_sorter() {
         a: 1
         "#;
 
-    let mut docs = YamlLoader::load_from_str(&test_str).unwrap();
+    let mut docs = YamlLoader::load_from_str(test_str).unwrap();
     let doc = &mut docs[0];
     process_yaml(doc, &config);
     println!("{:?}", doc);
@@ -65,7 +74,7 @@ fn test_array_sorter() {
         - name: Carol
         "#;
 
-    let mut docs = YamlLoader::load_from_str(&test_str).unwrap();
+    let mut docs = YamlLoader::load_from_str(test_str).unwrap();
     let doc = &mut docs[0];
     process_yaml(doc, &config);
     assert_eq!(doc, &Yaml::Array(
