@@ -14,13 +14,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Cargo test
-        run: cargo test
       - name: Release Build
         run: cargo build --release
+      - name: Cargo test
+        run: cargo test
       - name: Check artifact weight
         run: ls -lh target/release/
-      - name: Before
-        run: cat test.yaml
-      - name: Run
-        run: cargo run --release -- e test.yaml
