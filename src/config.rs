@@ -17,8 +17,18 @@ pub fn set_config(sort_key: String, pre_order: Vec<String>) -> Config {
 pub fn init_config() -> Config {
     let config_yaml = load_config_from_file();
     set_config(
-        config_yaml["sortKey"].as_str().unwrap().to_string(),
-        config_yaml["preOrder"].as_vec().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect()
+        config_yaml["sortKey"]
+            .as_str()
+            .unwrap_or("")
+            .to_string(),
+        config_yaml["preOrder"]
+            .as_vec()
+            .unwrap_or(&vec![])
+            .iter()
+            .map(|x| x.as_str()
+                .unwrap()
+                .to_string())
+            .collect()
     )
 }
 
