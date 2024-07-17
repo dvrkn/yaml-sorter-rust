@@ -1,7 +1,6 @@
-use yaml_sorter_rust::config::{Config, init_test_config};
+use yaml_sorter_rust::config::{init_test_config};
 use yaml_sorter_rust::processors::{process_yaml};
 use yaml_rust2::{YamlLoader, Yaml};
-use yaml_sorter_rust::config;
 
 #[test]
 fn test_load_config() {
@@ -82,29 +81,4 @@ fn test_array_sorter() {
             ),
         ]
     ));
-
 }
-
-// #[test]
-// fn test_array_sorter() {
-//     let config_str = "
-//     sortKey: name
-//     ";
-//     let docs = YamlLoader::load_from_str(config_str).unwrap();
-//     CONFIG.set(docs[0].clone()).expect("Unable to set config");
-//
-//     let mut array = vec![
-//         yaml_rust2::yaml::Hash::new(),
-//         yaml_rust2::yaml::Hash::new(),
-//         yaml_rust2::yaml::Hash::new(),
-//     ];
-//
-//     array[0].insert(Yaml::String("name".to_string()), Yaml::String("Alice".to_string()));
-//     array[1].insert(Yaml::String("name".to_string()), Yaml::String("Bob".to_string()));
-//     array[2].insert(Yaml::String("name".to_string()), Yaml::String("Carol".to_string()));
-//
-//     array_sorter(&mut array);
-//
-//     let names: Vec<_> = array.iter().map(|h| h["name"].as_str().unwrap()).collect();
-//     assert_eq!(names, vec!["Alice", "Bob", "Carol"]);
-// }
