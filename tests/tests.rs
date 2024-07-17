@@ -6,8 +6,18 @@ pub fn init_test_config(mock_config: &str) -> Config {
     let config_yaml = YamlLoader::load_from_str(mock_config).unwrap();
     let config_doc = &config_yaml[0];
     set_config(
-        config_doc["sortKey"].as_str().unwrap().to_string(),
-        config_doc["preOrder"].as_vec().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect()
+        config_doc["sortKey"]
+            .as_str()
+            .unwrap_or("")
+            .to_string(),
+        config_doc["preOrder"]
+            .as_vec()
+            .unwrap_or(&vec![])
+            .iter()
+            .map(|x| x.as_str()
+                .unwrap()
+                .to_string())
+            .collect()
     )
 }
 
@@ -34,10 +44,8 @@ fn test_hash_sorter() {
         preOrder:
             - b
             - a
-        sortKey: test_key
         "
     );
-
 
     let test_str = r#"
         c: 3
@@ -62,9 +70,6 @@ fn test_hash_sorter() {
 fn test_array_sorter() {
     let config = init_test_config(
         "
-        preOrder:
-            - b
-            - a
         sortKey: name
         "
     );
