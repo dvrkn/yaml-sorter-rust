@@ -6,23 +6,13 @@ use std::fs::File;
 use std::io::{Read, Write};
 use crate::config::init_config;
 
-struct Cli {
-    action: String,
-    path: std::path::PathBuf,
-}
-
 fn main() {
     let config = init_config();
 
     let action = std::env::args().nth(1).expect("no action given");
     let path = std::env::args().nth(2).expect("no path given");
 
-    let args = Cli {
-        action,
-        path: std::path::PathBuf::from(path),
-    };
-
-    let mut file = File::open(&args.path).expect("Unable to open file");
+    let mut file = File::open(&path).expect("Unable to open file");
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Unable to read file");
     let mut docs = yaml_rust2::YamlLoader::load_from_str(&contents).expect("Unable to parse file");
@@ -39,8 +29,8 @@ fn main() {
         }
     }
 
-    if args.action == "i" {
-        let mut file = File::create(&args.path).expect("Unable to create file");
+    if action == "i" {
+        let mut file = File::create(&path).expect("Unable to create file");
         file.write_all(out_str.as_bytes()).expect("Unable to write to file");
     } else {
         println!("{}", out_str);

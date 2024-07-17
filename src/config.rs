@@ -7,6 +7,14 @@ pub struct Config {
     pub pre_order: Vec<String>
 }
 
+fn load_config_from_file() -> Yaml {
+    let mut file = File::open("config.yaml").expect("Unable to open config file");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Unable to read config file");
+    let docs = YamlLoader::load_from_str(&contents).expect("Unable to parse config file");
+    docs[0].clone()
+}
+
 pub fn set_config(sort_key: String, pre_order: Vec<String>) -> Config {
     Config {
         sort_key,
@@ -30,12 +38,4 @@ pub fn init_config() -> Config {
                 .to_string())
             .collect()
     )
-}
-
-fn load_config_from_file() -> Yaml {
-    let mut file = File::open("config.yaml").expect("Unable to open config file");
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).expect("Unable to read config file");
-    let docs = YamlLoader::load_from_str(&contents).expect("Unable to parse config file");
-    docs[0].clone()
 }
