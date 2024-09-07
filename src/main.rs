@@ -31,6 +31,8 @@ fn main() {
 
     if action == "i" {
         let mut file = File::create(&path).expect("Unable to create file");
+        out_str = out_str.trim_start_matches("---\n").to_string();
+        out_str.push('\n');
         file.write_all(out_str.as_bytes()).expect("Unable to write to file");
     } else {
         println!("{}", out_str);
