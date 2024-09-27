@@ -1,15 +1,16 @@
+// processors.rs
 use yaml_rust2::yaml::{Array, Hash, Yaml};
 use crate::config::Config;
 
 pub fn process_yaml(doc: &mut Yaml, config: &Config) {
     match doc {
-        Yaml::Array(ref mut v) => {
+        Yaml::Array(v) => {
             array_sorter(v, &config.sort_key);
             for x in v {
                 process_yaml(x, config);
             }
         }
-        Yaml::Hash(ref mut h) => {
+        Yaml::Hash(h) => {
             hash_sorter(h, &config.pre_order);
             for (_, v) in h {
                 process_yaml(v, config);
@@ -19,19 +20,19 @@ pub fn process_yaml(doc: &mut Yaml, config: &Config) {
     }
 }
 
-pub fn hash_sorter(hash: &mut Hash, pre_order: &Vec<String>) {
+pub fn hash_sorter(hash: &mut Hash, pre_order: &[String]) {
     let mut result = Hash::new();
 
-    // Sort the hash by the pre_order_array
+    // Sort the hash by the pre_order array
     for key in pre_order {
-        if let Some((k, v)) = hash.remove_entry(&Yaml::String(key.to_string())) {
+        if let Some((k, v)) = hash.remove_entry(&Yaml::String(key.clone())) {
             result.insert(k, v);
         }
     }
 
     // Sort the remaining hash
-    let mut hash_keys: Vec<_> = hash.keys().cloned().collect();
-    hash_keys.sort();
+    let mut hash_keys: Vec<Yaml> = hash.keys().cloned().collect();
+    hash_keys.sort_by(|a, b| a.cmp(b));
     for key in hash_keys {
         if let Some((k, v)) = hash.remove_entry(&key) {
             result.insert(k, v);
