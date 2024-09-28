@@ -1,17 +1,16 @@
 // processors.rs
 use yaml_rust2::yaml::{Array, Hash, Yaml};
-use crate::config::Config;
 
-pub fn process_yaml(doc: &mut Yaml, config: &Config) {
+pub fn process_yaml(doc: &mut Yaml, config: &Yaml) {
     match doc {
         Yaml::Array(v) => {
-            array_sorter(v, &config.sort_key);
+            array_sorter(v, &config["sortKey"].as_str().unwrap());
             for x in v {
                 process_yaml(x, config);
             }
         }
         Yaml::Hash(h) => {
-            hash_sorter(h, &config.pre_order);
+            hash_sorter(h, &config["preOrder"].as_vec().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect::<Vec<String>>());
             for (_, v) in h {
                 process_yaml(v, config);
             }

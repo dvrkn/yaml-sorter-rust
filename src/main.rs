@@ -3,7 +3,7 @@ use clap::Parser;
 use processors::process_yaml;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
-use crate::config::init_config;
+use crate::config::{load_config_from_file};
 use yaml_rust2::YamlLoader;
 
 mod config;
@@ -27,7 +27,7 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
-    let config = init_config(&cli.config);
+    let config = load_config_from_file(&cli.config);
 
     let file = File::open(&cli.input).expect("Unable to open file");
     let mut reader = BufReader::new(file);
