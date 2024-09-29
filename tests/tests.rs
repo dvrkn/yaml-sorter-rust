@@ -1,9 +1,10 @@
-use yaml_sorter_rust::config::{load_config_from_file};
-use yaml_sorter_rust::processors::{process_yaml};
+use yaml_sorter_rust::config::load_config_from_file;
+use yaml_sorter_rust::processors::process_yaml;
 use yaml_rust2::{YamlLoader, Yaml, YamlEmitter};
+use std::borrow::Cow;
 
 pub fn init_test_config(config_path: &str) -> Yaml {
-    load_config_from_file(config_path)
+    load_config_from_file(config_path).expect("Failed to load config")
 }
 
 #[test]
@@ -13,7 +14,6 @@ fn test_load_config() {
     assert!(config["preOrder"].is_array());
     assert_eq!(config["sortKey"].as_str().unwrap(), "name");
 }
-
 
 #[test]
 fn test_hash_sorter() {
@@ -25,11 +25,11 @@ fn test_hash_sorter() {
         a: 1
         "#;
 
-    let mut docs = YamlLoader::load_from_str(test_str).unwrap();
-    let doc = &mut docs[0];
-    process_yaml(doc, &config);
-    println!("{:?}", doc);
-    assert_eq!(doc, &Yaml::Hash(
+    let docs = YamlLoader::load_from_str(test_str).unwrap();
+    let doc = &docs[0];
+    let processed_doc = process_yaml(Cow::Borrowed(doc), &config);
+    println!("{:?}", processed_doc);
+    assert_eq!(processed_doc.into_owned(), Yaml::Hash(
         vec![
             (Yaml::String("a".to_string()), Yaml::Integer(1)),
             (Yaml::String("b".to_string()), Yaml::Integer(2)),
@@ -47,10 +47,10 @@ fn test_array_sorter() {
         - name: Carol
         "#;
 
-    let mut docs = YamlLoader::load_from_str(test_str).unwrap();
-    let doc = &mut docs[0];
-    process_yaml(doc, &config);
-    assert_eq!(doc, &Yaml::Array(
+    let docs = YamlLoader::load_from_str(test_str).unwrap();
+    let doc = &docs[0];
+    let processed_doc = process_yaml(Cow::Borrowed(doc), &config);
+    assert_eq!(processed_doc.into_owned(), Yaml::Array(
         vec![
             Yaml::Hash(
                 vec![(Yaml::String("name".to_string()), Yaml::String("Alice".to_string()))].into_iter().collect()
@@ -146,14 +146,14 @@ arr:
   - test: without sort key
 test: yaml"#;
 
-    let mut docs = YamlLoader::load_from_str(test_str).unwrap();
-    let doc = &mut docs[0];
-    process_yaml(doc, &config);
+    let docs = YamlLoader::load_from_str(test_str).unwrap();
+    let doc = &docs[0];
+    let processed_doc = process_yaml(Cow::Borrowed(doc), &config);
 
     let mut out_str = String::new();
     {
         let mut emitter = YamlEmitter::new(&mut out_str);
-        emitter.dump(doc).unwrap();
+        emitter.dump(&processed_doc).unwrap();
     }
 
     assert_eq!(out_str, result);
