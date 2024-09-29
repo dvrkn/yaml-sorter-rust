@@ -1,4 +1,3 @@
-// lib.rs
 pub mod config;
 pub mod processors;
 

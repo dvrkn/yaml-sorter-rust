@@ -1,10 +1,10 @@
-// main.rs
 use clap::Parser;
 use processors::process_yaml;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
-use crate::config::{load_config_from_file};
+use crate::config::load_config_from_file;
 use yaml_rust2::YamlLoader;
+use std::borrow::Cow;
 
 mod config;
 mod processors;
@@ -27,22 +27,22 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
-    let config = load_config_from_file(&cli.config);
+    let config = load_config_from_file(&cli.config).expect("Failed to load config");
 
     let file = File::open(&cli.input).expect("Unable to open file");
     let mut reader = BufReader::new(file);
     let mut contents = String::new();
     reader.read_to_string(&mut contents).expect("Unable to read file");
-    let mut docs = YamlLoader::load_from_str(&contents).expect("Unable to parse file");
+    let docs = YamlLoader::load_from_str(&contents).expect("Unable to parse file");
 
-    for doc in &mut docs {
-        process_yaml(doc, &config);
-    }
+    let processed_docs: Vec<_> = docs.into_iter()
+        .map(|doc| process_yaml(Cow::Owned(doc), &config).into_owned())
+        .collect();
 
     let mut out_str = String::new();
     {
         let mut emitter = yaml_rust2::YamlEmitter::new(&mut out_str);
-        for doc in &docs {
+        for doc in &processed_docs {
             emitter.dump(doc).unwrap();
         }
     }
