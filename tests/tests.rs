@@ -1,51 +1,23 @@
-use yaml_sorter_rust::config::{Config, set_config};
+use yaml_sorter_rust::config::{load_config_from_file};
 use yaml_sorter_rust::processors::{process_yaml};
 use yaml_rust2::{YamlLoader, Yaml, YamlEmitter};
 
-pub fn init_test_config(mock_config: &str) -> Config {
-    let config_yaml = YamlLoader::load_from_str(mock_config).unwrap();
-    let config_doc = &config_yaml[0];
-    set_config(
-        config_doc["sortKey"]
-            .as_str()
-            .unwrap_or("")
-            .to_string(),
-        config_doc["preOrder"]
-            .as_vec()
-            .unwrap_or(&vec![])
-            .iter()
-            .map(|x| x.as_str()
-                .unwrap()
-                .to_string())
-            .collect()
-    )
+pub fn init_test_config(config_path: &str) -> Yaml {
+    load_config_from_file(config_path)
 }
 
 #[test]
 fn test_load_config() {
-    let config = init_test_config(
-        "
-        preOrder:
-            - b
-            - a
-        sortKey: test_key
-        "
-    );
+    let config = init_test_config("config.yaml");
 
-    assert!(!config.pre_order.is_empty());
-    assert_eq!(config.sort_key, "test_key")
+    assert!(config["preOrder"].is_array());
+    assert_eq!(config["sortKey"].as_str().unwrap(), "name");
 }
 
 
 #[test]
 fn test_hash_sorter() {
-    let config = init_test_config(
-        "
-        preOrder:
-            - b
-            - a
-        "
-    );
+    let config = init_test_config("config.yaml");
 
     let test_str = r#"
         c: 3
@@ -59,8 +31,8 @@ fn test_hash_sorter() {
     println!("{:?}", doc);
     assert_eq!(doc, &Yaml::Hash(
         vec![
-            (Yaml::String("b".to_string()), Yaml::Integer(2)),
             (Yaml::String("a".to_string()), Yaml::Integer(1)),
+            (Yaml::String("b".to_string()), Yaml::Integer(2)),
             (Yaml::String("c".to_string()), Yaml::Integer(3)),
         ].into_iter().collect()
     ));
@@ -68,11 +40,7 @@ fn test_hash_sorter() {
 
 #[test]
 fn test_array_sorter() {
-    let config = init_test_config(
-        "
-        sortKey: name
-        "
-    );
+    let config = init_test_config("config.yaml");
     let test_str = r#"
         - name: Bob
         - name: Alice
@@ -99,35 +67,7 @@ fn test_array_sorter() {
 
 #[test]
 fn full_test() {
-    let config = init_test_config(
-        "
-        sortKey: name
-        preOrder:
-          - enabled
-          - apiVersion
-          - kind
-          - metadata
-          - name
-          - namespace
-          - labels
-          - annotations
-          - goTemplate
-          - generators
-          - spec
-          - containers
-          - image
-          - ports
-          - protocol
-          - resources
-          - limits
-          - requests
-          - cpu
-          - memory
-          - volumeMount
-          - destination
-          - sources
-        "
-    );
+    let config = init_test_config("config-gitops.yaml");
 
     let test_str = r#"
 test: yaml

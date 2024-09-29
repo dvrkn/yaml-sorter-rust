@@ -1,5 +1,5 @@
 # Arrays sort key
-sortKey: a
+sortKey: name
 
 # Hashes pre-order
 preOrder:
